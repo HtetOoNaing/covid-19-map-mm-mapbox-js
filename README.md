@@ -12,4 +12,4 @@
 
 ### Demo
 
-![alt text](https://github.com/HtetOoNaing/pig-game-js/blob/master/result.png?raw=true)
+![alt text](https://github.com/HtetOoNaing/covid-19-map-mm-mapbox-js/blob/master/result.png?raw=true)
