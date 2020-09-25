@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Covid19_mm map</title>
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.js"></script>
+    <link
+      href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.2.0/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="geojson.js"></script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+      }
+
+      .mapboxgl-popup-content {
+        font: 400 15px/22px "Source Sans Pro", "Helvetica Neue", Sans-serif;
+        padding: 0;
+        width: 180px;
+        padding-bottom: 10px;
+      }
+      .mapboxgl-popup-content-wrapper {
+        padding: 1%;
+      }
+      .mapboxgl-popup-content h3 {
+        background: #33adff;
+        color: #fff;
+        margin: 0;
+        display: block;
+        padding: 10px;
+        border-radius: 3px 3px 0 0;
+        font-weight: 700;
+        margin-top: -5px;
+        text-align: center;
+      }
+
+      .mapboxgl-popup-content h4 {
+        margin: 0;
+        display: block;
+        padding: 2px 10px;
+        font-weight: 400;
+      }
+
+      .mapboxgl-container .leaflet-marker-icon {
+        cursor: pointer;
+      }
+
+      .mapboxgl-popup-anchor-top > .mapboxgl-popup-content {
+        margin-top: 5px;
+      }
+      .mapboxgl-popup-close-button {
+        color: #fff;
+        font-size: large;
+        top: -9px;
+        padding-right: 2px;
+      }
+      .mapboxgl-compact {
+        display: none;
+      }
+      .mapboxgl-ctrl-attrib {
+        display: none;
+      }
+      .mapboxgl-ctrl-bottom-left {
+        display: none;
+      }
+      .marker {
+        color: red;
+        font-weight: bold;
+        font-size: 25px;
+        cursor: pointer;
+      }
+
+      .autocomplete {
+        background: #fff;
+        position: relative;
+        width: 400px;
+        float: right;
+        /* box-shadow: 0 0 2px rgba(0, 0, 0, 0.12), 0 2px 2px rgba(0, 0, 0, 0.24); */
+      }
+      .autocomplete .close {
+        position: absolute;
+        font-size: 13px;
+        z-index: 10;
+        top: 10px;
+        left: calc(100% - 50px);
+        color: #aaa;
+        cursor: pointer;
+        display: none;
+      }
+      .autocomplete .close.visible {
+        display: block;
+      }
+      input {
+        padding: 12px 0 12px 10px;
+        font-weight: 300;
+        width: 90%;
+        border: none;
+        outline: none;
+        font-size: 14px;
+        color: #666;
+      }
+      .dialog {
+        width: 100%;
+        display: none;
+        min-height: 40px;
+        max-height: 330px;
+        overflow: scroll;
+        border-top: 1px solid #f4f4f4;
+      }
+      .dialog.open {
+        display: block;
+      }
+      .dialog div {
+        padding: 14px 10px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .dialog div:hover {
+        background: #f2f2f2;
+      }
+      .initialBtn {
+        background-color: #fff;
+        position: absolute;
+        bottom: 120px;
+        right: 12px;
+        cursor: pointer;
+        padding: 5px 5px 0 5px;
+        border-radius: 4px;
+        box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+      }
+      .colorDescription {
+        position: absolute;
+        left: 5px;
+        bottom: 10px;
+        background-color: #fff;
+        font-size: 18px;
+        padding: 10px;
+        border-radius: 4px;
+      }
+      .colorItem {
+        vertical-align: middle;
+      }
+      .colorItem i {
+        position: relative;
+        top: 4px;
+        left: 0;
+        font-size: 25px;
+      }
+      .descriptionText {
+        padding-left: 10px;
+        opacity: 0.7;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <div class="initialBtn">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+      >
+        <path
+          d="M12 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm3.222 18.917c5.666-5.905-.629-10.828-5.011-7.706l1.789 1.789h-6v-6l1.832 1.832c7.846-6.07 16.212 4.479 7.39 10.085z"
+        />
+      </svg>
+    </div>
+    <div class="autocomplete">
+      <input
+        type="text"
+        placeholder="Search your place name"
+        autocomplete="off"
+      />
+      <span class="close">Cancel</span>
+      <div class="dialog"></div>
+    </div>
+    <div class="colorDescription">
+      <div class="colorItem">
+        <i class="far fa-dot-circle" style="color: #0066ff;"></i
+        ><span class="descriptionText">no lab confirm</span>
+      </div>
+      <div class="colorItem">
+        <i class="far fa-dot-circle" style="color: #6600cc;"></i
+        ><span class="descriptionText">lab confirm < 5</span>
+      </div>
+      <div class="colorItem">
+        <i class="far fa-dot-circle" style="color: red;"></i
+        ><span class="descriptionText">lab confirm > 5</span>
+      </div>
+    </div>
+
+    <script>
+      // accessToken
+      mapboxgl.accessToken =
+        "pk.eyJ1IjoiaHRldG9vbmFpbmciLCJhIjoiY2pubmFpa2x2MDN0YTNwcGFzd2RxYjhucSJ9.-iNVlzJCPgH6n99e-tH4nw";
+      // initialize map
+      let map = new mapboxgl.Map({
+        container: "map",
+        style: "mapbox://styles/mapbox/streets-v11",
+        center: [95.955971, 21.916222],
+        zoom: 7,
+      });
+      // places for autocomplete
+      let places = [];
+
+      // add markers to map
+      hospitalJSON.features.forEach(function (marker) {
+        places.push(marker.properties.place_name.real_name);
+        places.push(marker.properties.place_name.unicode);
+        places.push(marker.properties.place_name.zawgyi);
+        // create a HTML element for each feature
+        var el = document.createElement("div");
+        el.className = "marker";
+        if (marker.properties.lab_confirmed < 1) {
+          el.innerHTML =
+            "<i class='far fa-dot-circle' style='color:#0066ff;'></i>";
+        } else if (marker.properties.lab_confirmed < 5) {
+          el.innerHTML =
+            "<i class='far fa-dot-circle' style='color:#6600cc;'></i>";
+        } else {
+          el.innerHTML = "<i class='far fa-dot-circle'></i>";
+        }
+        el.addEventListener("click", function (e) {
+          /* Fly to the point */
+          map.flyTo({
+            center: marker.geometry.coordinates,
+            zoom: 12,
+          });
+        });
+
+        // make a marker for each feature and add to the map
+        new mapboxgl.Marker(el)
+          .setLngLat(marker.geometry.coordinates)
+          .setPopup(
+            new mapboxgl.Popup() // add popups
+              .setHTML(
+                "<h3>" +
+                  marker.properties.place_name.real_name +
+                  "</h3><h4> total cases : " +
+                  marker.properties.total_cases +
+                  "</h4><h4> pui : " +
+                  marker.properties.pui +
+                  "</h4><h4> suspected : " +
+                  marker.properties.suspected +
+                  "</h4><h4> lab confirmed : " +
+                  marker.properties.lab_confirmed +
+                  "</h4><h4> lab negative : " +
+                  marker.properties.lab_negative +
+                  "</h4><h4> lab pending : " +
+                  marker.properties.lab_pending +
+                  "</h4><h4> die : " +
+                  marker.properties.die +
+                  "</h4><h4> recovered : " +
+                  marker.properties.recovered +
+                  "</h4>"
+              )
+          )
+          .addTo(map);
+      });
+      regionJSON.features.map((region) => {
+        places.push(region.properties.place_name.real_name);
+        places.push(region.properties.place_name.unicode);
+        places.push(region.properties.place_name.zawgyi);
+      });
+      townshipJSON.features.map((township) => {
+        places.push(township.properties.place_name.real_name);
+        places.push(township.properties.place_name.unicode);
+        places.push(township.properties.place_name.zawgyi);
+      });
+      $(".initialBtn").click(() => {
+        map.flyTo({
+          center: [95.955971, 21.916222],
+          zoom: 7,
+        });
+      });
+
+      map.addControl(new mapboxgl.NavigationControl(), "bottom-right");
+
+      $(function () {
+        let alreadyFilled = false;
+        function initDialog() {
+          clearDialog();
+          for (var i = 0; i < places.length; i++) {
+            $(".dialog").append("<div>" + places[i] + "</div>");
+          }
+        }
+        function clearDialog() {
+          $(".dialog").empty();
+        }
+        $(".autocomplete input").click(function () {
+          if (!alreadyFilled) {
+            $(".dialog").addClass("open");
+          }
+        });
+        $("body").on("click", ".dialog > div", function () {
+          $(".autocomplete input").val($(this).text()).focus();
+          $(".autocomplete .close").addClass("visible");
+          alreadyFilled = true;
+
+          let filteredRegion = regionJSON.features.filter(
+            (feature) =>
+              feature.properties.place_name.real_name === $(this).text() ||
+              feature.properties.place_name.zawgyi === $(this).text() ||
+              feature.properties.place_name.unicode === $(this).text()
+          );
+          if (filteredRegion.length > 0) {
+            map.flyTo({
+              center: filteredRegion[0].geometry.coordinates,
+              zoom: 9,
+              essential: true, // this animation is considered essential with respect to prefers-reduced-motion
+            });
+          } else {
+            let filteredTownship = townshipJSON.features.filter(
+              (feature) =>
+                feature.properties.place_name.real_name === $(this).text() ||
+                feature.properties.place_name.zawgyi === $(this).text() ||
+                feature.properties.place_name.unicode === $(this).text()
+            );
+            if (filteredTownship.length > 0) {
+              map.flyTo({
+                center: filteredTownship[0].geometry.coordinates,
+                zoom: 11,
+                essential: true, // this animation is considered essential with respect to prefers-reduced-motion
+              });
+            } else {
+              let filteredHospital = hospitalJSON.features.filter(
+                (feature) =>
+                  feature.properties.place_name.real_name === $(this).text() ||
+                  feature.properties.place_name.zawgyi === $(this).text() ||
+                  feature.properties.place_name.unicode === $(this).text()
+              );
+              map.flyTo({
+                center: filteredHospital[0].geometry.coordinates,
+                zoom: 12,
+                essential: true, // this animation is considered essential with respect to prefers-reduced-motion
+              });
+            }
+          }
+        });
+        $(".autocomplete .close").click(function () {
+          alreadyFilled = false;
+          initDialog();
+          $(".dialog").addClass("open");
+          $(".autocomplete input").val("").focus();
+          $(this).removeClass("visible");
+          map.flyTo({
+            center: [95.955971, 21.916222],
+            zoom: 7,
+            essential: true, // this animation is considered essential with respect to prefers-reduced-motion
+          });
+        });
+
+        function match(str) {
+          str = str.toLowerCase();
+          clearDialog();
+          for (var i = 0; i < places.length; i++) {
+            if (places[i].toLowerCase().startsWith(str)) {
+              $(".dialog").append("<div>" + places[i] + "</div>");
+            }
+          }
+        }
+        $(".autocomplete input").on("input", function () {
+          $(".dialog").addClass("open");
+          alreadyFilled = false;
+          match($(this).val());
+        });
+        $("body").click(function (e) {
+          if (!$(e.target).is("input, .close")) {
+            $(".dialog").removeClass("open");
+          }
+        });
+        initDialog();
+      });
+    </script>
+  </body>
+</html>
