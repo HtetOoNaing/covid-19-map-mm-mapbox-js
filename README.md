@@ -1,5 +1,7 @@
 # covid-19-map-mm-mapbox-js
 
+This is testing project for [Corona MM](https://www.corona-mm.info)
+
 ## Used Techonology
 
 - Mapbox
